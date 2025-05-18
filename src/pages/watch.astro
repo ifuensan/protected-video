@@ -1,0 +1,26 @@
+---
+export const prerender = false;
+
+import Layout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import PayToUnlock from '../components/PayToUnlock.jsx';
+
+const file = new URL(Astro.request.url).searchParams.get("file");
+const video = (await getCollection("clases")).find(v => v.data.file === file)?.data;
+console.log("VIDEO FILE PARAM:", file);
+console.log("CLASES DISPONIBLES:", (await getCollection("clases")).map(v => v.data.file));
+---
+
+<Layout title={video?.title || "Clase"}>
+  {video ? (
+    <PayToUnlock
+      file={video.file}
+      title={video.title}
+      description={video.description}
+      client:only="react"
+    />
+  ) : (
+    <p class="text-center text-zinc-400">Clase no encontrada.</p>
+  )}
+</Layout>
+

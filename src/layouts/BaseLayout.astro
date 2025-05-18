@@ -1,0 +1,32 @@
+---
+const { title = 'Librería Recorded' } = Astro.props;
+import '../styles/global.css';
+---
+
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="bg-zinc-900 text-zinc-100 font-sans min-h-screen">
+    <header class="bg-zinc-950 border-b border-zinc-800 shadow">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <h1 class="text-xl font-bold text-brand">📚 LIBRERÍA RECORDED</h1>
+        <nav class="space-x-4 text-sm text-zinc-300">
+        <a href="/" class="hover:text-white">Inicio</a>
+        <a href="/watch" class="hover:text-white">Clases</a>
+        <a href="#" class="hover:text-white">Contacto</a>
+        </nav>
+    </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-10">
+      <slot />
+    </main>
+
+    <footer class="text-center text-xs text-zinc-500 py-6 border-t border-zinc-800">
+      © {new Date().getFullYear()} La Librería de Satoshi
+    </footer>
+  </body>
+</html>
