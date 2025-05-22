@@ -55,7 +55,7 @@ export default function PayToUnlock({ file, title, description }) {
           onClick={createInvoice}
           className="bg-brand text-white px-4 py-2 rounded hover:bg-orange-600"
         >
-          Pagar con Lightning
+          Pagar con Lightning ⚡ 1000 Sats
         </button>
       )}
 

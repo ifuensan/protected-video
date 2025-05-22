@@ -15,7 +15,7 @@ export const POST: APIRoute = async ({ request }) => {
     const createRes = await axios.post(
       `${import.meta.env.BTCPAY_URL}/api/v1/stores/${import.meta.env.BTCPAY_STORE_ID}/invoices`,
       {
-        amount: 10,
+        amount: 2000,
         currency: "SATS",
         metadata: { pubkey, file },
       },
