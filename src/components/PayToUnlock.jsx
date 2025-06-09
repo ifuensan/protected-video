@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import VideoPlayer from "./VideoPlayer";
 import QRCodeWrapper from "./QRCodeWrapper";
 
-export default function PayToUnlock({ file, title, description }) {
+export default function PayToUnlock({ file, title, description, hotmartUrl }) { // Add hotmartUrl prop
   const [invoice, setInvoice] = useState(null);
   const [paid, setPaid] = useState(false);
 
@@ -15,7 +15,6 @@ export default function PayToUnlock({ file, title, description }) {
 
     const data = await res.json();
 
-    // ✅ Asigna propiedades esperadas
     setInvoice({
       id: data.invoiceId,
       url: data.checkoutUrl,
@@ -23,20 +22,17 @@ export default function PayToUnlock({ file, title, description }) {
     });
   };
 
-  // Polling para verificar estado del invoice
   useEffect(() => {
     if (!invoice || paid) return;
 
     const interval = setInterval(async () => {
-      const res = await fetch(
-        `/api/invoice-status?id=${invoice.id}`,
-      );
+      const res = await fetch(`/api/invoice-status?id=${invoice.id}`);
       const data = await res.json();
       if (data.status === "Settled") {
         setPaid(true);
         clearInterval(interval);
       }
-    }, 5000); // cada 5 segundos
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [invoice, paid]);
@@ -51,14 +47,17 @@ export default function PayToUnlock({ file, title, description }) {
       <p className="text-sm text-zinc-300 mb-4">{description}</p>
 
       {!invoice && (
-        <button
-          onClick={createInvoice}
-          className="bg-brand text-white px-4 py-2 rounded hover:bg-orange-600"
-        >
-          Pagar con Lightning ⚡ 1000 Sats
-        </button>
+        <div className="flex flex-col gap-4 items-center">
+          <button
+            onClick={createInvoice}
+            className="bg-brand text-white px-4 py-2 rounded hover:bg-orange-600 w-full"
+          >
+            Pagar con Lightning ⚡ 1000 Sats
+          </button>
+        </div>
       )}
 
+      {/* Rest of the component remains the same */}
       {invoice && (
         <div className="flex justify-center mt-4">
           <QRCodeWrapper value={invoice.paymentLink} size={192} />

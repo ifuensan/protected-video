@@ -8,6 +8,7 @@ const clases = defineCollection({
     description: z.string(),
     image: z.string(),
     file: z.string(),
+    hotmartUrl: z.string().url(),
   }),
 });
 

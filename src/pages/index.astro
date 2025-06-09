@@ -4,7 +4,10 @@ import { getCollection } from 'astro:content';
 import CourseList from '../components/CourseList.jsx';
 
 const clasesData = await getCollection('clases');
-const clases = clasesData.map(({ data }) => data);
+const clases = clasesData.map(({ data, slug }) => ({
+  ...data,
+  slug,
+}));
 ---
 
 <Layout title="Clases disponibles">
