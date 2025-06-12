@@ -8,7 +8,7 @@ export default function QRCodeWrapper({ value, size = 192 }) {
     import("qrcode.react").then((mod) => {
       setQRCode(() => mod.default || mod.QRCode);
     });
-  }, []);
+  }, []); 
 
   if (!QRCode) return <p className="text-zinc-400">Cargando QR...</p>;
 
