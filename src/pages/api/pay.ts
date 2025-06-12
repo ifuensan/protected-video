@@ -1,67 +1,73 @@
-import type { APIRoute } from "astro";
-import axios from "axios";
-
-export const prerender = false;
-
-export const POST: APIRoute = async ({ request }) => {
+// src/pages/api/pay.js (o similar)
+export async function POST({ request }) {
   try {
-    const { pubkey, file } = await request.json();
+    const { file } = await request.json();
+    
+    // Tu llamada a BTCPayServer API
+    const btcPayResponse = await fetch(`${BTCPAY_URL}/api/v1/stores/${STORE_ID}/invoices`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${BTCPAY_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        amount: '2000', // 2000 sats
+        currency: 'SATS',
+        metadata: {
+          file: file
+        },
+        checkout: {
+          speedPolicy: 'MediumSpeed',
+          paymentMethods: ['BTC-LN', 'BTC-CHAIN', 'BTC-LNURL'],
+          expirationMinutes: 60,
+        }
+      })
+    });
 
-    if (!file) {
-      return new Response("Missing file", { status: 400 });
+    const invoiceData = await btcPayResponse.json();
+    
+    // Obtener los métodos de pago
+    const paymentMethodsResponse = await fetch(
+      `${BTCPAY_URL}/api/v1/stores/${STORE_ID}/invoices/${invoiceData.id}/payment-methods`, 
+      {
+        headers: {
+          'Authorization': `token ${BTCPAY_TOKEN}`,
+        }
+      }
+    );
+    
+    const paymentMethods = await paymentMethodsResponse.json();
+    
+    // Buscar el método Lightning (BTC-LN)
+    const lightningMethod = paymentMethods.find(method => method.paymentMethodId === 'BTC-LN');
+    
+    if (!lightningMethod) {
+      throw new Error('Lightning payment method not available');
     }
 
-    // 1. Crear invoice
-    const createRes = await axios.post(
-      `${import.meta.env.BTCPAY_URL}/api/v1/stores/${import.meta.env.BTCPAY_STORE_ID}/invoices`,
-      {
-        amount: 2000,
-        currency: "SATS",
-        metadata: { pubkey, file },
+    return new Response(JSON.stringify({
+      invoiceId: invoiceData.id,
+      checkoutUrl: invoiceData.checkoutLink,
+      paymentLink: lightningMethod.paymentLink, // Este ya incluye "lightning:"
+      amount: lightningMethod.amount,
+      status: invoiceData.status
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
       },
-      {
-        headers: {
-          Authorization: `token ${import.meta.env.BTCPAY_API_KEY}`,
-        },
-      }
-    );
+    });
 
-    const invoiceId = createRes.data.id;
-
-    // 2. Obtener detalles de métodos de pago (para extraer bolt11)
-    const paymentMethodsRes = await axios.get(
-      `${import.meta.env.BTCPAY_URL}/api/v1/stores/${import.meta.env.BTCPAY_STORE_ID}/invoices/${invoiceId}/payment-methods`,
-      {
-        headers: {
-          Authorization: `token ${import.meta.env.BTCPAY_API_KEY}`,
-        },
-      }
-    );
-
-  const paymentLink = paymentMethodsRes.data.find(
-    (m) => m.paymentMethodId === "BTC-LN"
-  )?.paymentLink || null;
-
-
-    /*console.log("🔍 Full invoice details:", JSON.stringify(invoiceRes.data, null, 2));*/
-    console.log("🧾 Invoice created:", JSON.stringify(createRes.data, null, 2));
-    console.log("💳 Payment methods:", JSON.stringify(paymentMethodsRes.data, null, 2));
-  
-    return new Response(
-      JSON.stringify({
-        invoiceId,
-        checkoutUrl: createRes.data.checkoutLink,
-        paymentLink,
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  } catch (err: any) {
-    console.error("BTCPay error:", err?.response?.data || err?.message);
-    return new Response(
-      JSON.stringify({ error: "BTCPay invoice failed" }),
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to create invoice',
+      details: error.message 
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
-};
+}
